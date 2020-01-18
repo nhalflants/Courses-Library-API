@@ -24,6 +24,7 @@ namespace CourseLibrary.API.Controllers
                 throw new ArgumentNullException(nameof(mapper));
         }
         [HttpGet()]
+        [HttpHead()]
         public ActionResult<IEnumerable<AuthorDto>> GetAuthors()
         {
             var authors = _courseLibraryRepository.GetAuthors();
