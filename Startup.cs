@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
-
+using Microsoft.AspNetCore.Http;
 
 namespace CourseLibrary.API
 {
@@ -59,6 +59,14 @@ namespace CourseLibrary.API
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            } else {
+                app.UseExceptionHandler(appBuilder => 
+                {
+                    appBuilder.Run(async context => {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected fault happened");
+                    });
+                });
             }
 
             app.UseHttpsRedirection();
