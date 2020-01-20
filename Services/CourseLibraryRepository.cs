@@ -11,9 +11,12 @@ namespace CourseLibrary.API.Services
     public class CourseLibraryRepository : ICourseLibraryRepository, IDisposable
     {
         private readonly CourseLibraryContext _context;
+        public readonly IPropertyMappingService _propertyMappingService;
 
-        public CourseLibraryRepository(CourseLibraryContext context )
+        public CourseLibraryRepository(CourseLibraryContext context,
+            IPropertyMappingService propertyMappingService)
         {
+            _propertyMappingService = propertyMappingService?? throw new ArgumentNullException(nameof(propertyMappingService));
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
@@ -26,14 +29,14 @@ namespace CourseLibrary.API.Services
                 throw new ArgumentNullException(nameof(course));
             // always set the AuthorId to the passed-in authorId
             course.AuthorId = authorId;
-            _context.Courses.Add(course); 
-        }         
+            _context.Courses.Add(course);
+        }
 
         public void DeleteCourse(Course course)
         {
             _context.Courses.Remove(course);
         }
-  
+
         public Course GetCourse(Guid authorId, Guid courseId)
         {
             if (authorId == Guid.Empty)
@@ -92,7 +95,7 @@ namespace CourseLibrary.API.Services
 
             _context.Authors.Remove(author);
         }
-        
+
         public Author GetAuthor(Guid authorId)
         {
             if (authorId == Guid.Empty)
@@ -111,28 +114,37 @@ namespace CourseLibrary.API.Services
             /* if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory) 
                 && string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
                 return GetAuthors(); */
-            
+
             var collection = _context.Authors as IQueryable<Author>;
 
-            if (!string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory)) 
+            if (!string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory))
             {
                 var mainCategory = authorsResourceParameters.MainCategory.Trim();
                 collection = _context.Authors.Where(a => a.MainCategory == mainCategory);
             }
 
-            if (!string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery)) 
+            if (!string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
             {
                 var searchQuery = authorsResourceParameters.SearchQuery.Trim();
-                collection = collection.Where(a => a.MainCategory.Contains(searchQuery) 
+                collection = collection.Where(a => a.MainCategory.Contains(searchQuery)
                     || a.FirstName.Contains(searchQuery)
                     || a.LastName.Contains(searchQuery));
             }
 
+            if (!string.IsNullOrWhiteSpace(authorsResourceParameters.OrderBy))
+            {
+                /* if (authorsResourceParameters.OrderBy.ToLowerInvariant() == "name")
+                    collection = collection.OrderBy(a => a.FirstName).ThenBy(a => a.LastName); */
+
+                var authorPropertyMappingDictionnary = _propertyMappingService.GetPropertyMapping<Models.AuthorDto, Author>();
+                
+                collection = collection.ApplySort(authorsResourceParameters.OrderBy, authorPropertyMappingDictionnary);
+            }
             /* return collection.Skip(authorsResourceParameters.PageSize * (authorsResourceParameters.PageNumber - 1))
                 .Take(authorsResourceParameters.PageSize).ToList();*/
             return PagedList<Author>.Create(collection, authorsResourceParameters.PageNumber, authorsResourceParameters.PageSize);
         }
-         
+
         public IEnumerable<Author> GetAuthors(IEnumerable<Guid> authorIds)
         {
             if (authorIds == null)
@@ -164,7 +176,7 @@ namespace CourseLibrary.API.Services
         {
             if (disposing)
             {
-               // dispose resources when needed
+                // dispose resources when needed
             }
         }
     }

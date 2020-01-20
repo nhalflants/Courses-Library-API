@@ -60,6 +60,9 @@ namespace CourseLibrary.API
                     };
                 };
             });
+
+            // Register PropertyMappingService
+            services.AddTransient<IPropertyMappingService, PropertyMappingService>();
             
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             

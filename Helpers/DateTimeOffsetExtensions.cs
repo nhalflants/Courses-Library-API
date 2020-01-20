@@ -6,11 +6,13 @@ namespace CourseLibrary.API.Helpers
     {
         public static int GetCurrentAge(this DateTimeOffset dateTimeOffset) 
         {
-            var currentDate = DateTime.UtcNow;
-            int age = currentDate.Year - dateTimeOffset.Year;
-            if (currentDate < dateTimeOffset.AddYears(age))
+            var dateToCalculateTo = DateTime.UtcNow;
+            var age = dateToCalculateTo.Year - dateTimeOffset.Year;
+
+            if (dateToCalculateTo < dateTimeOffset.AddYears(age))
                 age--;
-            return age;
+
+            return age; 
         }
     }
 }
